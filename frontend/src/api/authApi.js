@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = 'GET', body, token } = {}) {
+export async function request(path, { method = 'GET', body, token } = {}) {
   const headers = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Bearer ${token}`;

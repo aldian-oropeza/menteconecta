@@ -4,6 +4,17 @@ let poolPromise = null;
 
 /** Construye la configuración de `mssql` a partir de config.db. */
 export function buildSqlConfig(db) {
+  if (db.windowsAuth) {
+    const quote = (value) => `{${String(value).replaceAll('}', '}}')}}`;
+    const server = db.instance ? `${db.server}\\${db.instance}` : `${db.server},${db.port}`;
+    return {
+      server: db.server,
+      database: db.database,
+      connectionString: `Driver=${quote(db.odbcDriver)};Server=${quote(server)};Database=${quote(db.database)};Trusted_Connection=Yes;Encrypt=${db.encrypt ? 'Yes' : 'No'};TrustServerCertificate=${db.trustServerCertificate ? 'Yes' : 'No'};`,
+      options: { trustedConnection: true },
+      pool: { max: 10, min: 0, idleTimeoutMillis: 30000 }
+    };
+  }
   const options = {
     encrypt: db.encrypt,
     trustServerCertificate: db.trustServerCertificate
@@ -29,9 +40,12 @@ export function buildSqlConfig(db) {
 /** Devuelve un pool único y reutilizable (se crea en la primera llamada). */
 export function getPool(db) {
   if (!poolPromise) {
-    const pool = new sql.ConnectionPool(buildSqlConfig(db));
-    pool.on('error', (err) => console.error('[db] error en el pool:', err.message));
-    poolPromise = pool.connect().catch((err) => {
+    poolPromise = (async () => {
+      const driver = db.windowsAuth ? (await import('mssql/msnodesqlv8.js')).default : sql;
+      const pool = new driver.ConnectionPool(buildSqlConfig(db));
+      pool.on('error', (err) => console.error('[db] error en el pool:', err.message));
+      return pool.connect();
+    })().catch((err) => {
       poolPromise = null; // permite reintentar en la siguiente petición
       throw err;
     });

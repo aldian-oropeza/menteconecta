@@ -1,0 +1,647 @@
+{
+  "info": {
+    "name": "MenteConecta — Pruebas locales completas",
+    "description": "Ejecutar en orden. Crea una cuenta de prueba con correo único; elimina el favorito y la conversación creados. La cuenta y su consentimiento quedan en SQL para inspección. Usar solo en local. Las colecciones previas contienen pruebas adicionales de registro emocional.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:3000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "correo",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": "PruebaLocal2026!SoloTest"
+    },
+    {
+      "key": "categoria",
+      "value": ""
+    },
+    {
+      "key": "recurso",
+      "value": ""
+    },
+    {
+      "key": "conversacion",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "item": [
+        {
+          "name": "01 Registrar usuario de prueba",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Prueba Postman\",\n  \"correo\": \"{{correo}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('correo','postman-'+Date.now()+'@example.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 201',()=>pm.response.to.have.status(201));",
+                  "if(pm.response.code===201) pm.collectionVariables.set('token',pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Iniciar sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correo}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));",
+                  "if(pm.response.code===200) pm.collectionVariables.set('token',pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Mi usuario",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "name": "01 · Acceso y usuario"
+    },
+    {
+      "item": [
+        {
+          "name": "04 Categorías — seleccionar Meditación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/library/categories"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));",
+                  "const c=pm.response.json().categorias.find(c=>c.nombre==='Meditación'); pm.test('Existe Meditación',()=>pm.expect(c).to.exist); if(c)pm.collectionVariables.set('categoria',c.idCategoria);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Lecturas de Meditación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/library?categoria={{categoria}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));",
+                  "const r=pm.response.json().recursos;pm.test('Solo meditación',()=>{pm.expect(r.length).to.be.above(0);r.forEach(x=>pm.expect(x.categoria).to.eql('Meditación'));});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Meditación y Ansiedad",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/library?categoria={{categoria}}&emocion=Ansiedad"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));",
+                  "const r=pm.response.json().recursos;pm.test('Coinciden ambos filtros',()=>{pm.expect(r.length).to.be.above(0);r.forEach(x=>{pm.expect(x.emocion).to.eql('Ansiedad');pm.expect(x.categoria).to.eql('Meditación');});});if(r.length)pm.collectionVariables.set('recurso',r[0].idRecurso);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Guardar favorito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/library/{{recurso}}/favorite"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 204',()=>pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Consultar favoritos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/library?favoritos=true"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));",
+                  "pm.test('Favorito guardado',()=>pm.expect(pm.response.json().recursos.some(r=>String(r.idRecurso)===pm.collectionVariables.get('recurso'))).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Quitar favorito de prueba",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/library/{{recurso}}/favorite"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 204',()=>pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "name": "02 · Biblioteca y favoritos"
+    },
+    {
+      "item": [
+        {
+          "name": "10 Ayuda interactiva",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/help"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "name": "03 · Ayuda interactiva"
+    },
+    {
+      "item": [
+        {
+          "name": "11 Consultar aviso del chat",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/status"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 Aceptar consentimiento del usuario de prueba",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/consent",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"aceptado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 Crear conversación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/conversations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 201',()=>pm.response.to.have.status(201));",
+                  "if(pm.response.code===201)pm.collectionVariables.set('conversacion',pm.response.json().conversacion.idConversacion);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 Elegir ansiedad",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/conversations/{{conversacion}}/messages",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Siento ansiedad\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 Elegir ejercicio para un examen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/conversations/{{conversacion}}/messages",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Tengo una exposición o examen\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));",
+                  "pm.test('Respuesta de apoyo',()=>pm.expect(pm.response.json().mensajes.at(-1).contenido.length).to.be.above(40));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 Consultar historial",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/conversations/{{conversacion}}/messages"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 Consultar título de la conversación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/conversations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 200',()=>pm.response.to.have.status(200));",
+                  "pm.test('Título por tema',()=>pm.expect(pm.response.json().conversaciones.some(c=>c.titulo==='Ansiedad')).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 Eliminar conversación de prueba",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/chat/conversations/{{conversacion}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 204',()=>pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "name": "04 · Chat y consentimiento"
+    },
+    {
+      "item": [
+        {
+          "name": "19 Acceso sin token rechazado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/library"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 401',()=>pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "name": "05 · Seguridad"
+    }
+  ]
+}

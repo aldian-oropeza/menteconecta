@@ -1,8 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import WelcomePage from './pages/WelcomePage.jsx';
 import EmotionPage from './pages/EmotionPage.jsx';
+import BibliotecaPage from './pages/biblioteca/BibliotecaPage.jsx';
+import AyudaInteractivaPage from './pages/ayuda-interactiva/AyudaInteractivaPage.jsx';
+import ChatGeminiPage from './pages/chat-gemini/ChatGeminiPage.jsx';
+import ApoyoPage from './pages/ApoyoPage.jsx';
+import DesktopLayout from './components/DesktopLayout.jsx';
 
 /**
  * Navegación mínima por estado (sin librería de rutas, para mantener el piloto simple).
@@ -17,6 +22,12 @@ export default function App() {
   const [session, setSession] = useState(null); // { user, token } | null
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [loginNotice, setLoginNotice] = useState('');
+
+  useEffect(() => {
+    if (!welcomeMessage) return;
+    const timer = setTimeout(() => setWelcomeMessage(''), 4500);
+    return () => clearTimeout(timer);
+  }, [welcomeMessage, session]);
 
   const handleAuthSuccess = ({ message, user, token }) => {
     setWelcomeMessage(message);
@@ -38,8 +49,12 @@ export default function App() {
   }, []);
 
   if (session) {
+    const frame = content => <DesktopLayout active={authenticatedView} user={session.user} onNavigate={setAuthenticatedView} onLogout={handleLogout}>{content}</DesktopLayout>;
+    const extraPages = { biblioteca: BibliotecaPage, ayuda: AyudaInteractivaPage, chat: ChatGeminiPage, apoyo: ApoyoPage };
+    const ExtraPage = extraPages[authenticatedView];
+    if (ExtraPage) return frame(<ExtraPage onOpenSupport={() => setAuthenticatedView('apoyo')} session={session} onBack={() => setAuthenticatedView('welcome')} onLogout={handleLogout} onSessionExpired={handleSessionExpired}/>);
     if (authenticatedView === 'emotions') {
-      return (
+      return frame(
         <EmotionPage
           session={session}
           onBack={() => setAuthenticatedView('welcome')}
@@ -48,11 +63,12 @@ export default function App() {
         />
       );
     }
-    return (
+    return frame(
       <WelcomePage
         session={session}
         message={welcomeMessage}
         onOpenEmotions={() => setAuthenticatedView('emotions')}
+        onOpenModule={setAuthenticatedView}
         onLogout={handleLogout}
         onSessionExpired={handleSessionExpired}
       />

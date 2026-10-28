@@ -1,4 +1,12 @@
 import { loadConfig } from './config/env.js';
+import { createLibraryRepository } from './db/biblioteca/bibliotecaRepository.js';
+import { createLibraryService } from './services/biblioteca/bibliotecaService.js';
+import { createHelpRepository } from './db/ayuda-interactiva/ayudainteractivaRepository.js';
+import { createHelpService } from './services/ayuda-interactiva/ayudainteractivaService.js';
+import { createChatRepository } from './db/chat-gemini/chatgeminiRepository.js';
+import { createChatService } from './services/chat-gemini/chatgeminiService.js';
+import { createGeminiClient } from './integrations/gemini/geminiClient.js';
+import { createDemoClient } from './integrations/gemini/demoClient.js';
 import { createApp } from './app.js';
 import { createUsuarioRepository } from './db/usuarioRepository.js';
 import { createConsentRepository } from './db/consentRepository.js';
@@ -29,7 +37,11 @@ async function main() {
     emociones: createEmotionRepository(config.db),
     consentService
   });
-  const app = createApp({ authService, consentService, emotionService, config });
+  const libraryService = createLibraryService(createLibraryRepository(config.db));
+  const helpService = createHelpService(createHelpRepository(config.db));
+  const provider = config.gemini.mode === 'live' ? createGeminiClient(config.gemini) : createDemoClient();
+  const chatService = createChatService(createChatRepository(config.db), provider);
+  const app = createApp({ authService, consentService, emotionService, libraryService, helpService, chatService, config });
 
   const server = app.listen(config.port, () => {
     console.log(`[api] MenteConecta API escuchando en http://localhost:${config.port}/api`);

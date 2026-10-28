@@ -21,7 +21,10 @@ export function loadConfig() {
   dotenv.config({ path: ENV_FILE });
   const env = process.env;
 
-  const missing = ['DB_SERVER', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'JWT_SECRET'].filter(
+  const windowsAuth = toBool(env.DB_WINDOWS_AUTH, false);
+  const required = ['DB_SERVER', 'DB_NAME', 'JWT_SECRET'];
+  if (!windowsAuth) required.push('DB_USER', 'DB_PASSWORD');
+  const missing = required.filter(
     (key) => !env[key]
   );
   if (missing.length > 0) {
@@ -42,6 +45,8 @@ export function loadConfig() {
     port: toInt(env.PORT, 3000),
     corsOrigin: env.CORS_ORIGIN || 'http://localhost:5173',
     db: {
+      windowsAuth,
+      odbcDriver: env.DB_ODBC_DRIVER || 'ODBC Driver 18 for SQL Server',
       server: env.DB_SERVER,
       port: toInt(env.DB_PORT, 1433),
       instance: env.DB_INSTANCE || undefined,
@@ -57,5 +62,6 @@ export function loadConfig() {
     },
     bcryptCost,
     authRateLimitMax: toInt(env.AUTH_RATE_LIMIT_MAX, 20)
+    ,gemini: { mode: env.GEMINI_MODE === 'live' ? 'live' : 'demo', apiKey: env.GEMINI_API_KEY || '', model: env.GEMINI_MODEL || 'gemini-3.8-flash' }
   };
 }

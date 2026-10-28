@@ -1,0 +1,26 @@
+COMO ABRIR MENTECONECTA EN ESTE EQUIPO
+
+1. Haz doble clic en Iniciar-MenteConecta.cmd.
+2. Se abrira http://127.0.0.1:5173 en el navegador.
+3. Crea tu cuenta desde Registro y luego inicia sesion.
+
+SQL Server (SQLEXPRESS) debe estar iniciado. No necesitas abrir SSMS ni Postman.
+Los datos quedan guardados en la base MenteConecta de localhost\SQLEXPRESS.
+Se utiliza tu sesion de Windows para conectar. No se necesita una clave SQL.
+Puedes volver a pulsar el archivo de inicio para reabrir el navegador.
+Los servidores siguen funcionando al cerrar el navegador, hasta reiniciar Windows.
+
+POSTMAN (opcional)
+Importa postman\MenteConecta-Auth.postman_collection.json.
+La API esta disponible en http://localhost:3000/api.
+
+Si ocurre un error, revisa los archivos de la carpeta logs.
+La configuracion privada esta en backend\.env; no la compartas ni subas a GitHub.
+El inicio automatico utiliza Node instalado o el runtime de Codex de este equipo.
+Para mover el proyecto a otro computador, hay que instalar dependencias y configurar SQL.
+
+CHAT EN SIMULACION
+Despues de iniciar sesion, abre Chat de apoyo, acepta el aviso y pulsa Nueva conversacion.
+Las respuestas son predefinidas: no se envia informacion a Google y no se necesita clave.
+Los mensajes se guardan en ConversacionIA y Mensaje; puedes borrar la conversacion desde el chat.
+Tambien estan disponibles Biblioteca de bienestar y Ayuda interactiva.

@@ -31,3 +31,6 @@ Thumbs.db
 *.mdf
 *.ldf
 *.tmp
+
+# Archivos temporales de Visual Studio y SSMS
+.vs/

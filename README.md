@@ -3,7 +3,9 @@
 Piloto de bienestar emocional para estudiantes del TdeA. El repositorio tiene implementados:
 
 - **Módulo 1:** registro, inicio de sesión y consulta del usuario autenticado.
-- **Módulo 2:** consentimiento para `REGISTRO_EMOCIONAL` y registro, consulta y eliminación de emociones propias.
+- **Registro emocional:** consentimiento, registro, consulta y eliminación de emociones propias.
+- **Biblioteca y ayuda:** categorías, favoritos privados y tres actividades guiadas.
+- **Chat:** simulación sin clave, historial privado y consentimiento; adaptador Gemini real preparado.
 
 ## Tecnologías
 
@@ -117,14 +119,15 @@ No cambies rutas, formatos ni el esquema sin acordarlo con el equipo y actualiza
 Si se requiere una modificación de base de datos, crea una migración incremental numerada; no alteres en
 silencio el script inicial. Nunca subas secretos ni datos personales o emocionales reales.
 
-## Siguiente paso acordado
+## Biblioteca, ayuda y chat local
 
-El siguiente módulo es la **biblioteca de recursos de bienestar**, incluyendo consulta por categorías y
-favoritos. El esquema inicial ya contempla `dbo.CategoriaRecurso`, `dbo.RecursoBienestar` y `dbo.Favorito`.
-Antes de implementarlo, revisa las pantallas aprobadas y acuerda con el equipo el alcance y el contrato.
-Luego integra el módulo siguiendo la arquitectura existente y agrega pruebas automatizadas. No iniciar aún
-la integración con Gemini: un futuro chat requerirá un alcance y consentimiento propios; su clave debe
-permanecer exclusivamente en el backend.
+Ejecutar database/02_biblioteca_chat.sql después del script inicial en una instalación nueva. En este equipo ya se aplicó. La aplicación se inicia con Iniciar-MenteConecta.cmd.
+
+El chat usa GEMINI_MODE=demo: respuestas predefinidas identificadas, sin llamadas a Google. Se guardan en ConversacionIA y Mensaje. La biblioteca usa RecursoBienestar, CategoriaRecurso y Favorito. Los ejercicios no guardan respuestas personales.
+
+Para Gemini real se necesita una clave propia en backend/.env, GEMINI_MODE=live y reiniciar el backend. La conexión externa no se ha probado con una clave real. El modo de cada conversación se conserva para no enviar conversaciones simuladas al proveedor real.
+
+Ver docs/07_Contrato_Biblioteca_Ayuda_Chat.md para rutas y límites. Para pruebas reales del modo demo: node backend/scripts/check-modules.js con la aplicación iniciada; crea y elimina cuentas temporales.
 
 ## Pendiente sobre contraseñas
 

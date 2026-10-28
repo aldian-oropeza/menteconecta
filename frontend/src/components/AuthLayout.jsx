@@ -11,13 +11,7 @@ export function Logo({ className = '' }) {
 /** Ilustración de la marca (anillo morado + círculos verdes), según Figma. */
 function Illustration() {
   return (
-    <svg className="aside-illustration" viewBox="0 0 140 140" role="img" aria-label="Ilustración de MenteConecta">
-      <circle cx="62" cy="68" r="54" fill="#F7F5FC" />
-      <circle cx="62" cy="68" r="38" fill="#FFFFFF" stroke="#6D28D9" strokeWidth="12" />
-      <circle cx="14" cy="26" r="8" fill="#008060" />
-      <circle cx="104" cy="104" r="22" fill="#008060" />
-      <circle cx="104" cy="104" r="12" fill="#A7E8D3" />
-    </svg>
+    <div className="brand-art"><img src="/assets/figma/access.svg" alt="" /></div>
   );
 }
 
@@ -66,3 +60,4 @@ export default function AuthLayout({ title, children }) {
     </div>
   );
 }
+
