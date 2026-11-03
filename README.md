@@ -1,137 +1,311 @@
 # MenteConecta
 
-Piloto de bienestar emocional para estudiantes del TdeA. El repositorio tiene implementados:
+Piloto de bienestar emocional para estudiantes del TdeA: registro e inicio de sesión, registro emocional con consentimiento, biblioteca y favoritos, ayuda interactiva, apoyo institucional y chat guiado con historial privado.
 
-- **Módulo 1:** registro, inicio de sesión y consulta del usuario autenticado.
-- **Registro emocional:** consentimiento, registro, consulta y eliminación de emociones propias.
-- **Biblioteca y ayuda:** categorías, favoritos privados y tres actividades guiadas.
-- **Chat:** simulación sin clave, historial privado y consentimiento; adaptador Gemini real preparado.
+## Antes de comenzar
 
-## Tecnologías
+Esta guía permite instalar una copia independiente en otro equipo Windows. **GitHub contiene el código y los scripts SQL, pero no instala SQL Server ni copia la base de datos, los usuarios o los archivos `.env` de otro equipo.** Cada integrante debe preparar su entorno.
 
-- Frontend: React 18 y Vite.
-- Backend: Node.js 20 o superior y Express.
-- Base de datos: SQL Server.
-- Autenticación: bcrypt y JWT.
+Para consultar la página desde un celular u otro equipo de la misma red, ve a la sección «Abrir la página desde otro dispositivo».
 
-## Preparar el entorno local
+### Requisitos
 
-Necesitas Node.js 20+, npm, SQL Server y SSMS. Los pasos siguientes están escritos para PowerShell.
+| Componente | Para qué se necesita |
+| --- | --- |
+| Node.js 20 o superior y npm | Ejecutar backend y frontend. La revisión local se realizó con Node.js 24. |
+| Git | Clonar y actualizar el repositorio. |
+| SQL Server, por ejemplo Express | Ejecutar el motor de base de datos. Instalar solo SSMS no instala el motor. |
+| SQL Server Management Studio (SSMS) | Conectarse a la instancia y ejecutar los scripts SQL. |
+| Microsoft ODBC Driver 18 for SQL Server | Necesario para la conexión con autenticación Windows descrita en esta guía. |
+| VS Code | Editar archivos y abrir las dos terminales del proyecto. |
+| Postman, opcional | Ejecutar las pruebas de la API. |
 
-### 1. Clonar el proyecto
+Los comandos siguientes son para **PowerShell**, incluida la terminal de VS Code. Ejecuta cada línea por separado. `npm.cmd` evita los bloqueos de ejecución del archivo `npm.ps1` en PowerShell.
+
+Comprueba la instalación:
 
 ```powershell
-git clone <URL-del-repositorio>
+node --version
+npm.cmd --version
+git --version
+```
+
+Si un comando no se reconoce, revisa su instalación y vuelve a abrir VS Code para que tome el PATH actualizado.
+
+## 1. Descargar y abrir el proyecto completo
+
+Desde la carpeta donde quieras guardarlo:
+
+```powershell
+git clone https://github.com/aldian-oropeza/menteconecta.git
 cd menteconecta
 ```
 
-### 2. Crear la base de datos
+En VS Code selecciona **Archivo → Abrir carpeta → menteconecta**. Conserva esta estructura:
 
-1. Abre SSMS, conéctate a tu instancia y ejecuta `database/01_schema_seed_MenteConecta.sql`.
-2. El script crea `MenteConecta`, sus tablas y los catálogos iniciales. No crea usuarios de prueba.
-3. En SSMS, habilita el modo de autenticación SQL en las propiedades del servidor. En SQL Server
-   Configuration Manager, habilita TCP/IP y reinicia el servicio si hiciste cambios. Crea un login con
-   permisos sobre la base:
+```text
+menteconecta/
+├── backend/     API y conexión a SQL Server
+├── frontend/    Página React y Vite
+├── shared/      Flujo y contenido compartido del chat
+├── database/    Scripts SQL numerados
+├── postman/     Colecciones de pruebas
+├── scripts/     Inicio local en Windows
+└── docs/        Contratos y documentación
+```
+
+No copies solo `frontend` o `backend`: ambos utilizan archivos de `shared`. No copies `node_modules` desde otro computador; instala las dependencias en cada equipo.
+
+## 2. Preparar SQL Server
+
+1. Abre SSMS y comprueba que puedes conectarte a tu instancia.
+2. Anota el nombre de servidor que utilizaste. Por ejemplo, `localhost\SQLEXPRESS` significa servidor `localhost` e instancia `SQLEXPRESS`. No uses el nombre del computador de otra persona.
+3. En una **instalación nueva**, abre y ejecuta cada archivo de `database/`, en este orden, usando la misma instancia:
+
+| Orden | Archivo |
+| --- | --- |
+| 1 | `01_schema_seed_MenteConecta.sql` |
+| 2 | `02_biblioteca_chat.sql` |
+| 3 | `03_recursos_emociones.sql` |
+| 4 | `04_lecturas_categorias.sql` |
+| 5 | `05_lecturas_por_emocion.sql` |
+| 6 | `06_contenido_ampliado.sql` |
+| 7 | `07_ejercicios_por_categoria.sql` |
+
+Comprueba que cada script termine sin errores antes de continuar. El primero crea la base `MenteConecta`; el 05 añade `RecursoBienestar.emocion`, utilizada por la biblioteca. La preparación completa contiene 37 lecturas activas.
+
+**Si la base ya existe, aplica solo los scripts pendientes.** Lleva un registro de los ejecutados. No repitas todos los scripts de contenido para actualizar una instalación: algunos identifican lecturas por títulos que cambian en scripts posteriores y podrías duplicarlas. No es necesario borrar tu base.
+
+Elige una de las dos formas de conexión siguientes.
+
+### Opción A: autenticación Windows con SQL Server local
+
+Utiliza esta opción si SSMS conecta con tu cuenta de Windows. La cuenta que ejecuta Node debe tener acceso a la base `MenteConecta`. Instala ODBC Driver 18.
+
+Para una instancia local llamada SQLEXPRESS, configura estas líneas de `backend/.env`:
+
+```dotenv
+DB_WINDOWS_AUTH=true
+DB_SERVER=localhost
+DB_INSTANCE=SQLEXPRESS
+DB_PORT=1433
+DB_NAME=MenteConecta
+DB_ODBC_DRIVER=ODBC Driver 18 for SQL Server
+DB_USER=
+DB_PASSWORD=
+DB_ENCRYPT=true
+DB_TRUST_SERVER_CERT=true
+```
+
+Si tu instancia tiene otro nombre, cambia `DB_INSTANCE`. Si usas una instancia por puerto, deja `DB_INSTANCE` vacío y escribe su puerto real en `DB_PORT`. El puerto se ignora cuando hay una instancia configurada. En este modo no se utilizan `DB_USER` y `DB_PASSWORD` y no necesitas crear el login SQL de la opción B.
+
+### Opción B: autenticación mediante usuario de SQL Server
+
+Usa esta opción si vas a conectar con un login SQL. El servidor debe permitir autenticación SQL y TCP/IP. Si modificas esa configuración, reinicia el servicio de SQL Server.
+
+En SSMS, con una cuenta con permisos administrativos, crea el login y su usuario **solo si aún no existen**. Sustituye la contraseña de ejemplo por una propia:
 
 ```sql
-CREATE LOGIN menteconecta_app WITH PASSWORD = 'ReemplazaEstaClave#2026', CHECK_POLICY = ON;
+USE master;
+GO
+CREATE LOGIN menteconecta_app WITH PASSWORD = 'REEMPLAZAR_POR_CLAVE_PROPIA', CHECK_POLICY = ON;
 GO
 USE MenteConecta;
+GO
 CREATE USER menteconecta_app FOR LOGIN menteconecta_app;
 ALTER ROLE db_datareader ADD MEMBER menteconecta_app;
 ALTER ROLE db_datawriter ADD MEMBER menteconecta_app;
 GO
 ```
 
-Usa una contraseña propia para tu entorno local. Si tu instancia tiene nombre, configura `DB_INSTANCE`
-en `.env`; las demás opciones de conexión están explicadas en `backend/.env.example`.
+Después configura `backend/.env`, usando exactamente la contraseña que asignaste:
 
-### 3. Configurar e iniciar el backend
+```dotenv
+DB_WINDOWS_AUTH=false
+DB_SERVER=localhost
+DB_INSTANCE=
+DB_PORT=1433
+DB_NAME=MenteConecta
+DB_USER=menteconecta_app
+DB_PASSWORD=REEMPLAZAR_POR_CLAVE_PROPIA
+DB_ENCRYPT=true
+DB_TRUST_SERVER_CERT=true
+```
 
-En una terminal de PowerShell:
+`1433` es solo un ejemplo: debe coincidir con el puerto TCP real de tu instancia. Para conectar por nombre, utiliza `DB_INSTANCE=SQLEXPRESS` o el nombre correspondiente; su resolución puede requerir SQL Server Browser. Los valores de `.env.example` no crean usuarios ni contraseñas en SQL Server.
+
+## 3. Configurar el backend
+
+Abre una terminal en la raíz `menteconecta`:
 
 ```powershell
 cd backend
-npm install
-Copy-Item .env.example .env
+npm.cmd ci
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
-Edita el archivo `.env` de esa carpeta con la configuración de tu SQL Server (`DB_SERVER`, `DB_PORT` o `DB_INSTANCE`,
-`DB_USER` y `DB_PASSWORD`). Genera un secreto JWT local y reemplaza `JWT_SECRET`:
+Edita `backend/.env` y coloca los datos de la opción A o B. Conserva también:
+
+```dotenv
+NODE_ENV=development
+PORT=3000
+CORS_ORIGIN=http://localhost:5173
+JWT_EXPIRES_IN=2h
+BCRYPT_COST=12
+AUTH_RATE_LIMIT_MAX=20
+GEMINI_MODE=demo
+GEMINI_API_KEY=
+```
+
+Genera un secreto para firmar las sesiones:
 
 ```powershell
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-No compartas ni subas `backend/.env`. Comprueba la conexión y arranca la API:
+Copia el resultado en la línea `JWT_SECRET=` de **tu** `backend/.env`. No lo compartas ni lo subas a GitHub. El ejemplo deja ese valor vacío para que cada instalación genere el suyo. Mantén `PORT=3000` para usar el proxy de Vite incluido.
+
+Comprueba la conexión antes de iniciar:
 
 ```powershell
-npm run db:check
-npm run dev
+npm.cmd run db:check
 ```
 
-La API queda en `http://localhost:3000/api`; el endpoint de salud es `GET /api/health`.
+Debe informar conexión correcta y esquema principal correcto. Esta comprobación no sustituye ejecutar los scripts de contenido pendientes. Si falla, corrige la configuración antes de continuar.
 
-### 4. Configurar e iniciar el frontend
-
-Abre otra terminal desde la raíz del proyecto:
+Inicia el servidor:
 
 ```powershell
-cd frontend
-npm install
-npm run dev
+npm.cmd run dev
 ```
 
-Abre `http://localhost:5173`. Ese origen debe coincidir con `CORS_ORIGIN` en el `.env` del backend.
+La entrada del backend es `backend/src/server.js`; se ejecuta mediante el comando anterior. Deben aparecer los mensajes de conexión a SQL Server y API escuchando en el puerto 3000. **Deja esta terminal abierta.** Si SQL Server falla, el backend se detiene.
 
-### 5. Ejecutar las pruebas
+Abre `http://127.0.0.1:3000/api/health`: debe responder `{"status":"ok"}`. Esto confirma que HTTP responde; para verificar la base usa `db:check`.
 
-En otra terminal desde la raíz del proyecto:
+## 4. Configurar el frontend
 
-```powershell
-cd backend
-npm test
-```
-
-Las pruebas automatizadas usan repositorios en memoria y no necesitan SQL Server. Para comprobar la
-conexión real, usa `npm run db:check`; puedes registrar una cuenta desde la aplicación y verificar los
-datos en SSMS. Antes de enviar cambios, abre otra terminal desde la raíz y valida la compilación:
+Abre una **segunda terminal en la raíz `menteconecta`**:
 
 ```powershell
 cd frontend
-npm run build
+npm.cmd ci
+npm.cmd run dev
 ```
 
-## Organización y reglas para continuar
+No necesitas crear `frontend/.env` para la configuración local habitual: el cliente usa `/api` y Vite redirige esas solicitudes al backend `http://127.0.0.1:3000`.
 
-El backend sigue el patrón **ruta → controlador → servicio → repositorio**. Las consultas SQL van en
-`backend/src/db/*Repository.js` y deben ser parametrizadas. Los servicios no conocen HTTP y los
-controladores no escriben SQL. Para rutas protegidas, el usuario se obtiene del JWT validado
-(`req.auth.idUsuario`), nunca de un identificador enviado por el cliente.
+Si ya tienes `frontend/.env`, comprueba que la dirección sea:
 
-Contratos y diagramas vigentes:
+```dotenv
+VITE_API_URL=/api
+```
 
-- Autenticación: [docs/04_Contrato_API_Auth.md](docs/04_Contrato_API_Auth.md).
-- Consentimiento y emociones: [docs/05_Contrato_API_Consentimiento_Emociones.md](docs/05_Contrato_API_Consentimiento_Emociones.md).
-- Documentación del piloto: [docs/README_Documentacion_Piloto.md](docs/README_Documentacion_Piloto.md).
+Reinicia Vite si cambias esa variable. No coloques contraseñas ni secretos en variables del frontend.
 
-No cambies rutas, formatos ni el esquema sin acordarlo con el equipo y actualizar primero la documentación.
-Si se requiere una modificación de base de datos, crea una migración incremental numerada; no alteres en
-silencio el script inicial. Nunca subas secretos ni datos personales o emocionales reales.
+Abre `http://localhost:5173` o `http://127.0.0.1:5173`. React se inicia desde `frontend/src/main.jsx`, a través de Vite: no abras `index.html` con doble clic ni con Live Server.
 
-## Biblioteca, ayuda y chat local
+Crea una cuenta desde la página. Los usuarios de otra instalación no se copian automáticamente a tu base.
 
-Ejecutar database/02_biblioteca_chat.sql después del script inicial en una instalación nueva. En este equipo ya se aplicó. La aplicación se inicia con Iniciar-MenteConecta.cmd.
+## 5. Iniciar el proyecto en días posteriores
 
-El chat usa GEMINI_MODE=demo: respuestas predefinidas identificadas, sin llamadas a Google. Se guardan en ConversacionIA y Mensaje. La biblioteca usa RecursoBienestar, CategoriaRecurso y Favorito. Los ejercicios no guardan respuestas personales.
+No necesitas reinstalar dependencias ni ejecutar todos los scripts SQL cada vez. Asegúrate de que el servicio SQL Server esté iniciado y ejecuta:
 
-Para Gemini real se necesita una clave propia en backend/.env, GEMINI_MODE=live y reiniciar el backend. La conexión externa no se ha probado con una clave real. El modo de cada conversación se conserva para no enviar conversaciones simuladas al proveedor real.
+- En una terminal situada en `backend`: `npm.cmd run dev`.
+- En otra terminal situada en `frontend`: `npm.cmd run dev`.
 
-Ver docs/07_Contrato_Biblioteca_Ayuda_Chat.md para rutas y límites. Para pruebas reales del modo demo: node backend/scripts/check-modules.js con la aplicación iniciada; crea y elimina cuentas temporales.
+También puedes usar `Iniciar-MenteConecta.cmd` en Windows tras completar la configuración. Usa un único método de inicio para evitar servidores duplicados. Para detener un servidor iniciado en terminal, pulsa `Ctrl+C` en su terminal.
 
-## Pendiente sobre contraseñas
+## 6. Abrir la página desde otro dispositivo de la misma red
 
-A petición del profesor queda pendiente definir cómo atender la recuperación de la contraseña de un
-usuario. La contraseña se guarda como hash bcrypt: **no es posible desencriptar el hash** para obtener
-la contraseña original. Revisar con el profesor una alternativa segura —normalmente un flujo para
-restablecerla— en lugar de intentar recuperar o mostrar la contraseña existente.
+Esta opción permite probar desde un celular u otro computador **usando la base y el backend del equipo anfitrión**. No es una publicación en Internet.
+
+1. Conecta ambos dispositivos a la misma red de confianza.
+2. En el anfitrión, deja SQL Server y el backend encendidos.
+3. Conserva `VITE_API_URL=/api` en el frontend.
+4. Detén el frontend anterior con `Ctrl+C` y, desde `frontend`, ejecuta:
+
+```powershell
+npm.cmd run dev -- --host 0.0.0.0
+```
+
+5. Abre en el otro dispositivo la dirección **Network** que muestre Vite, por ejemplo `http://192.168.1.25:5173`, sustituyendo esa IP por la real del anfitrión. `localhost` en un celular se refiere al celular, no al computador.
+6. Si no conecta, comprueba la red y que el firewall permita el puerto 5173 en la red privada utilizada para la prueba. No desactives el firewall ni abras SQL Server a Internet.
+
+Las peticiones `/api` llegan al proxy de Vite del anfitrión; el otro dispositivo no necesita acceder directamente al puerto SQL. Este acceso de desarrollo no usa HTTPS: úsalo para pruebas con datos ficticios. Para producción se necesita un despliegue con HTTPS y un proxy `/api` o una URL pública del backend con su CORS configurado. Subir el código a GitHub no publica la aplicación.
+
+### Sobre macOS y Linux
+
+La guía paso a paso y el lanzador `.cmd` están orientados a Windows. En macOS/Linux se usan `npm` en lugar de `npm.cmd` y `cp` en lugar de `Copy-Item`. No utilices autenticación Windows: necesitas una instancia SQL Server accesible y autenticación SQL. La instalación nativa de dependencias puede requerir herramientas adicionales de esa plataforma. No se ha validado una instalación completa del proyecto en esos sistemas.
+
+## 7. Pruebas
+
+Desde `backend`, sin necesitar SQL Server para las pruebas unitarias:
+
+```powershell
+npm.cmd test
+```
+
+Con SQL Server y ambos servidores en ejecución, desde `backend`:
+
+```powershell
+node scripts/check-modules.js
+```
+
+La prueba de integración usa `http://127.0.0.1:5173/api`, crea cuentas temporales y elimina sus propios datos al terminar. Verifica biblioteca, favoritos, ayuda, chat y controles de acceso.
+
+Desde `frontend`, comprueba la compilación:
+
+```powershell
+npm.cmd run build
+```
+
+### Postman
+
+Importa `postman/MenteConecta-Pruebas-Locales.postman_collection.json`. Mantén el backend encendido y ejecuta las 19 solicitudes en orden o la colección completa con **Run**. `baseUrl` es `http://127.0.0.1:3000/api`; no necesitas un environment adicional. El token se guarda automáticamente.
+
+La colección contiene carpetas de acceso, biblioteca, ayuda, chat y seguridad. Crea un usuario ficticio; elimina su favorito y conversación de prueba, pero conserva la cuenta y su consentimiento para inspección. Las otras colecciones de `postman/` incluyen pruebas de autenticación y registro emocional.
+
+## 8. Solución de problemas
+
+| Mensaje o síntoma | Qué revisar |
+| --- | --- |
+| `npm` o `node` no se reconoce | Instala Node.js y vuelve a abrir VS Code para actualizar el PATH. |
+| PowerShell bloquea `npm.ps1` | Usa `npm.cmd` como en esta guía. |
+| `npm ci` indica `Missing: msnodesqlv8` | Actualiza el repositorio: `package.json` y `package-lock.json` deben corresponder. No copies dependencias de otro equipo. |
+| Falla la carga de `msnodesqlv8` o el controlador ODBC | Revisa Node y el controlador nativo instalados en ese equipo; para Windows Auth necesitas ODBC Driver 18. Guarda el error exacto de instalación. |
+| Faltan variables o `JWT_SECRET` | Crea `backend/.env`, configura la base y genera tu secreto. |
+| `Login failed` / `ELOGIN` | Verifica autenticación Windows o SQL, credenciales y permisos sobre MenteConecta. |
+| No encuentra servidor o instancia SQL | Comprueba que SQL Server esté iniciado y que servidor, instancia o puerto coincidan con SSMS. En conexión TCP revisa TCP/IP y la resolución de la instancia. |
+| No existe MenteConecta, una tabla o la columna `emocion` | Comprueba la instancia seleccionada y los scripts aplicados. La columna de la biblioteca se añade en el script 05. |
+| «No se pudo conectar con el servidor» | Prueba `/api/health` en el puerto 3000 y revisa la terminal del backend. Que se vea el frontend no significa que la API esté encendida. |
+| Error CORS o solicitudes a una URL equivocada | Usa `VITE_API_URL=/api` y reinicia Vite. Si eliges una API externa, configura su URL y `CORS_ORIGIN` con el origen exacto de tu frontend. |
+| `EADDRINUSE` / puerto ocupado | Ya hay un proceso usando ese puerto. Detén la instancia duplicada del proyecto; no abras otro servidor encima. |
+| La biblioteca falla o faltan lecturas | Revisa que los scripts 01 al 07 estén aplicados en la base que realmente utiliza el backend. |
+| Un usuario del compañero no puede iniciar sesión | Cada base local tiene sus propios usuarios. Registra uno en esa instalación. |
+| Desde el celular no abre | Usa la dirección Network del anfitrión, la misma red y Vite con `--host 0.0.0.0`. |
+
+Para pedir ayuda, comparte el error de la terminal del backend, el resultado de `db:check` y las versiones de Node/npm. No compartas `.env`, contraseñas ni tokens.
+
+## Actualizar una instalación existente
+
+Guarda o confirma tus cambios locales antes de traer actualizaciones. Desde la raíz:
+
+```powershell
+git pull --ff-only
+```
+
+Si Git informa cambios locales o ramas divergentes, revísalos con el equipo; no fuerces ni descartes tu trabajo. Después instala con `npm.cmd ci` en `backend` y en `frontend`, con los servidores detenidos. Conserva tus `.env`: revisa las nuevas variables del ejemplo sin reemplazar tu configuración. Aplica únicamente migraciones SQL pendientes y reinicia ambos servidores.
+
+## Alcance del piloto y reglas del proyecto
+
+El chat usa `GEMINI_MODE=demo`: flujo guiado local, sin clave ni llamadas a Google. Su historial se guarda en `ConversacionIA` y `Mensaje`; el registro emocional es independiente. El adaptador Gemini real requiere configuración propia y un modelo disponible; no se ha validado con una clave real. La recuperación de contraseñas aún no está implementada. Las contraseñas se almacenan mediante hash bcrypt, no son recuperables como texto.
+
+El backend sigue **ruta → controlador → servicio → repositorio**. Las consultas SQL deben estar parametrizadas. El usuario de una ruta protegida proviene del JWT validado, no de un identificador enviado por el cliente. Acuerda con el equipo los cambios de contrato o esquema y documenta migraciones incrementales.
+
+No subas `.env`, `node_modules`, `logs`, `.vs`, copias personales de SQL Server ni datos reales de usuarios. Comparte código, ejemplos sin secretos y scripts SQL.
+
+- [Contrato de autenticación](docs/04_Contrato_API_Auth.md).
+- [Consentimiento y registro emocional](docs/05_Contrato_API_Consentimiento_Emociones.md).
+- [Biblioteca, ayuda y chat](docs/07_Contrato_Biblioteca_Ayuda_Chat.md).
+- [Documentación del piloto](docs/README_Documentacion_Piloto.md).

@@ -1,6 +1,6 @@
 // Cliente HTTP del módulo de autenticación. Rutas y cuerpos según docs/04_Contrato_API_Auth.md.
 
-const API_URL = (import.meta.env?.VITE_API_URL ?? 'http://localhost:3000/api').replace(/\/+$/, '');
+const API_URL = (import.meta.env?.VITE_API_URL ?? '/api').replace(/\/+$/, '');
 
 /** Error de la API con el status HTTP (0 = no hubo respuesta) y errores por campo si existen. */
 export class ApiError extends Error {
