@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef } from 'react';
+import PrivacyPolicy from './PrivacyPolicy.jsx';
 
 export function Logo({ className = '' }) {
   return (
@@ -21,7 +22,7 @@ function Illustration() {
  *  - móvil: solo la tarjeta con el formulario
  */
 export default function AuthLayout({ title, children }) {
-  const [showPrivacyNote, setShowPrivacyNote] = useState(false);
+  const privacyDialog = useRef(null);
 
   return (
     <div className="auth-page">
@@ -41,22 +42,18 @@ export default function AuthLayout({ title, children }) {
 
         <section className="auth-main">
           <Logo className="logo-mobile" />
-          <h1 className="auth-title">{title}</h1>
+          <div className="auth-heading"><h1 className="auth-title">{title}</h1><img className="auth-institution-logo" src="/assets/tdea.svg" alt="Tecnológico de Antioquia — Institución Universitaria" width="125" height="32" /></div>
           {children}
         </section>
       </main>
 
       <footer className="auth-footer">
         <span>MenteConecta</span>
-        <button type="button" className="link-button" onClick={() => setShowPrivacyNote((v) => !v)}>
+        <button type="button" className="link-button" aria-haspopup="dialog" aria-controls="privacy-dialog" onClick={() => privacyDialog.current?.showModal()}>
           Política de privacidad
         </button>
       </footer>
-      {showPrivacyNote && (
-        <p className="auth-footer-note" role="status">
-          El texto de la política de privacidad institucional se publicará próximamente.
-        </p>
-      )}
+      <dialog id="privacy-dialog" ref={privacyDialog} className="privacy-dialog" aria-labelledby="privacy-title"><div className="privacy-dialog-toolbar"><button type="button" className="btn btn-secondary" autoFocus onClick={() => privacyDialog.current?.close()}>Cerrar política</button></div><PrivacyPolicy /></dialog>
     </div>
   );
 }

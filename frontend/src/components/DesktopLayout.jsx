@@ -8,7 +8,6 @@ export default function DesktopLayout({active,user,onNavigate,onLogout,children}
       <div className="sidebar-support"><strong>Opciones de apoyo</strong><p>Bienestar y acompañamiento institucional.</p><button className="btn" aria-current={active==='apoyo'?'page':undefined} onClick={()=>onNavigate('apoyo')}>Ver apoyo del TdeA</button></div>
       <div className="sidebar-account"><strong>{user?.nombre || 'Mi cuenta'}</strong><span>Mi cuenta personal</span><button className="link-button" onClick={onLogout}>Cerrar sesión</button></div>
     </aside>
-    <div className="desktop-workspace"><header className="desktop-topbar"><span>MenteConecta / {sections.find(([id])=>id===active)?.[1]}</span><button className="link-button mobile-logout" onClick={onLogout}>Cerrar sesión</button><span className="account-badge">Mi espacio</span></header><div id="page-content" className="desktop-content" key={active}>{children}</div></div>
+    <div className="desktop-workspace"><header className="desktop-topbar"><img className="institution-logo" src="/assets/tdea.svg" alt="Tecnológico de Antioquia — Institución Universitaria" width="156" height="40"/><span className="desktop-breadcrumb">MenteConecta / {sections.find(([id])=>id===active)?.[1]}</span><button className="link-button mobile-logout" onClick={onLogout}>Cerrar sesión</button><span className="account-badge">Mi espacio</span></header><div id="page-content" className="desktop-content" key={active}>{children}</div></div>
   </div>;
 }
-

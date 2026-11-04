@@ -12,7 +12,7 @@ Para consultar la página desde un celular u otro equipo de la misma red, ve a l
 
 | Componente | Para qué se necesita |
 | --- | --- |
-| Node.js 20 o superior y npm | Ejecutar backend y frontend. La revisión local se realizó con Node.js 24. |
+| Node.js 24 y su npm incluido (mínimo: Node 22) | Las dependencias actuales de Azure requieren Node 22 o superior. La revisión local se realizó con Node.js 24. |
 | Git | Clonar y actualizar el repositorio. |
 | SQL Server, por ejemplo Express | Ejecutar el motor de base de datos. Instalar solo SSMS no instala el motor. |
 | SQL Server Management Studio (SSMS) | Conectarse a la instancia y ejecutar los scripts SQL. |
@@ -309,3 +309,11 @@ No subas `.env`, `node_modules`, `logs`, `.vs`, copias personales de SQL Server 
 - [Consentimiento y registro emocional](docs/05_Contrato_API_Consentimiento_Emociones.md).
 - [Biblioteca, ayuda y chat](docs/07_Contrato_Biblioteca_Ayuda_Chat.md).
 - [Documentación del piloto](docs/README_Documentacion_Piloto.md).
+
+## Si la instalación falla con Node 20 o Python 3.12
+
+Los avisos EBADENGINE con Node 20 indican que no se cumple el mínimo de las dependencias. Instala Node.js 24 para Windows con el npm incluido desde https://nodejs.org/en/download, cierra todas las ventanas de VS Code y vuelve a abrirlo. Comprueba node --version y npm.cmd --version antes de reinstalar.
+
+Si aparece ModuleNotFoundError: No module named 'distutils' al compilar msnodesqlv8, revisa la versión de node-gyp del error: Python 3.12 requiere node-gyp 10 o superior (https://github.com/nodejs/node-gyp#installation). El log recibido utilizaba node-gyp 9.4.0 incluido en npm 10.1.0. Actualizar Node con su npm incluido evita seguir usando esa herramienta antigua; instalar node-gyp globalmente no garantiza que npm use esa copia.
+
+Detén los servidores del proyecto antes de repetir npm.cmd ci desde backend. Si siguen los avisos EPERM de archivos bloqueados, reinicia Windows y vuelve a intentar la instalación antes de iniciar servidores. No ejecutes db:check ni dev hasta que ci termine sin errores. La ausencia de dotenv después de una instalación fallida es una consecuencia, no se resuelve instalando únicamente ese paquete.

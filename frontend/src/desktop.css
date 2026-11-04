@@ -112,3 +112,30 @@ body { font-size:16px; }
 
 
 .search-topics{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 24px}.topic-button{border:1px solid var(--border);border-radius:24px;background:white;color:var(--primary);padding:9px 16px;font:inherit;font-size:14px;cursor:pointer}.topic-button:hover{background:var(--primary-soft)}.empty-library{background:white;padding:28px;border-radius:20px}.support-routes{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.support-routes a,.support-panel a{color:var(--primary);overflow-wrap:anywhere}.support-routes .muted{margin-top:16px}.resource-content{font-size:16px;line-height:1.85}.chat-notice{margin-top:16px}
+
+/* Logo institucional compartido por todas las secciones. */
+.desktop-topbar { position:sticky; top:0; z-index:5; flex-wrap:wrap; }
+.institution-logo { display:block; width:156px; height:40px; object-fit:contain; flex:none; }
+.desktop-breadcrumb { flex:1; min-width:0; }
+@media(max-width:560px) {
+  .desktop-topbar { gap:12px; }
+  .desktop-breadcrumb { order:3; flex-basis:100%; }
+  .desktop-topbar .mobile-logout { margin-left:auto; }
+}
+/* Identidad institucional discreta en login y registro. */
+.auth-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+.auth-heading .auth-title { margin:0; }
+.auth-institution-logo { display:block; width:125px; height:32px; object-fit:contain; flex:none; }
+@media(max-width:560px) {
+  .auth-heading { gap:12px; }
+  .auth-institution-logo { width:109px; height:28px; }
+}
+.privacy-policy { width:100%; max-width:1296px; box-sizing:border-box; padding:clamp(20px,4vw,40px); border-radius:20px; background:var(--surface); color:var(--text); line-height:1.75; overflow-wrap:anywhere; }
+.privacy-policy h2 { margin-top:0; font-size:26px; }
+.privacy-policy h3 { margin:24px 0 8px; font-size:19px; }
+.privacy-policy li { margin-bottom:8px; }
+.privacy-dialog { width:min(820px,calc(100vw - 32px)); max-height:85vh; margin:auto; padding:0; border:1px solid var(--border); border-radius:20px; background:var(--surface); color:var(--text); overflow:auto; box-shadow:0 24px 80px #24134433; }
+.privacy-dialog::backdrop { background:rgb(36 19 68 / 45%); }
+.privacy-dialog-toolbar { position:sticky; top:0; display:flex; justify-content:flex-end; padding:12px 20px; background:var(--surface); border-bottom:1px solid var(--border); }
+.privacy-dialog-toolbar .btn { width:auto; min-height:40px; }
+.privacy-dialog .privacy-policy { border-radius:0; }
