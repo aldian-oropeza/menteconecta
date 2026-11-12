@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {getPool,sql,closePool} from '../src/db/pool.js';
 import {loadConfig} from '../src/config/env.js';
-const base='http://127.0.0.1:5173/api';
+const base=process.env.TEST_API_URL || 'http://localhost:5173/api';
 const emails=[];
 async function call(path,token,method='GET',body){const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json().catch(()=>null)};}
 async function user(){const correo=`modules-${randomUUID()}@example.com`;emails.push(correo);const r=await call('/auth/register',null,'POST',{nombre:'Prueba módulos',correo,password:randomUUID()});assert.equal(r.status,201);return r.data.token;}

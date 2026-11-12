@@ -37,7 +37,10 @@ export function createAuthService({ usuarios, config }) {
         created = await usuarios.create({ nombre, correo, passwordHash });
       } catch (err) {
         // La restricción UNIQUE de SQL Server decide (también ante peticiones simultáneas).
-        if (isDuplicateKeyError(err)) {
+        // Con msnodesqlv8 (autenticación Windows) el 2627/2601 se pierde y solo llega el
+        // 3621 («The statement has been terminated»); por eso, ante cualquier fallo,
+        // se comprueba si el correo ya quedó registrado.
+        if (isDuplicateKeyError(err) || (await usuarios.findByCorreo(correo).catch(() => null))) {
           throw new AppError(409, 'Ya existe una cuenta con ese correo.');
         }
         throw err;

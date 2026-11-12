@@ -125,6 +125,23 @@ describe('API /api/auth', () => {
       assert.equal(repo.rows.length, 1);
     });
 
+    test('409 aunque el driver solo informe el error 3621 (msnodesqlv8)', async () => {
+      await call('/auth/register', { method: 'POST', body: ana });
+      const create = repo.create;
+      repo.create = async () => {
+        const err = new Error('The statement has been terminated.');
+        err.number = 3621;
+        throw err;
+      };
+      try {
+        const res = await call('/auth/register', { method: 'POST', body: ana });
+        assert.equal(res.status, 409);
+        assert.equal(res.json.message, 'Ya existe una cuenta con ese correo.');
+      } finally {
+        repo.create = create;
+      }
+    });
+
     test('400 con errores por campo si los datos son inválidos', async () => {
       const res = await call('/auth/register', {
         method: 'POST',
