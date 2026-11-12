@@ -252,7 +252,26 @@ Con SQL Server y ambos servidores en ejecución, desde `backend`:
 node scripts/check-modules.js
 ```
 
-La prueba de integración usa `http://127.0.0.1:5173/api`, crea cuentas temporales y elimina sus propios datos al terminar. Verifica biblioteca, favoritos, ayuda, chat y controles de acceso.
+La prueba de integración usa `http://localhost:5173/api` (se puede cambiar con `TEST_API_URL`), crea cuentas temporales y elimina sus propios datos al terminar. Verifica biblioteca, favoritos, ayuda, chat y controles de acceso.
+
+### Pruebas end-to-end (Playwright)
+
+La carpeta `e2e/` abre un navegador real y recorre la aplicación (72 casos con su ID `CP_xxx`). La primera vez, desde `e2e`:
+
+```powershell
+npm.cmd install
+npx.cmd playwright install chromium
+```
+
+Para ejecutarlas, con los servidores **detenidos** (Playwright los inicia solo con `GEMINI_MODE=demo` y el límite de intentos subido):
+
+```powershell
+npm.cmd test              # todo
+npm.cmd run test:ui       # panel interactivo
+npm.cmd run report        # informe con capturas de los fallos
+```
+
+Detalles en [`e2e/README.md`](e2e/README.md). Las pruebas crean usuarios `e2e.…@tdea.edu.co` que quedan en tu base local.
 
 Desde `frontend`, comprueba la compilación:
 
@@ -294,6 +313,8 @@ Guarda o confirma tus cambios locales antes de traer actualizaciones. Desde la r
 ```powershell
 git pull --ff-only
 ```
+
+> **Biblioteca, Ayuda interactiva o Asistente IA no muestran nada.** Estos tres módulos y los scripts SQL `02` al `07` llegaron juntos (commit `1b83d77`). Si instalaste antes, el inicio de sesión y el registro emocional siguen funcionando, pero esos módulos fallan. Haz, en orden: `git pull --ff-only`; `npm.cmd ci` en `backend` y en `frontend`; ejecuta en SSMS los scripts `02` al `07` (son seguros de repetir) sobre la base que usa tu backend; corre `npm.cmd run db:check` en `backend` hasta que diga «correcto»; y reinicia **ambos** servidores (cierra las ventanas anteriores, incluido el lanzador `.cmd`).
 
 Si Git informa cambios locales o ramas divergentes, revísalos con el equipo; no fuerces ni descartes tu trabajo. Después instala con `npm.cmd ci` en `backend` y en `frontend`, con los servidores detenidos. Conserva tus `.env`: revisa las nuevas variables del ejemplo sin reemplazar tu configuración. Aplica únicamente migraciones SQL pendientes y reinicia ambos servidores.
 

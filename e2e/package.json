@@ -1,0 +1,19 @@
+{
+  "name": "menteconecta-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pruebas end-to-end (Playwright) del piloto de MenteConecta",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
